@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Billing - Grinkrawear{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1><i class="bi bi-receipt"></i> Billing</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'customer_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-people"></i> Customers
+        </a>
+        <a href="{% url 'invoice_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> New Invoice
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="table-container mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="Search invoices..."
+                       value="{{ search_query }}">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select name="status" class="form-select">
+                <option value="">All Status</option>
+                <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>Paid</option>
+                <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">Filter</button>
+        </div>
+    </form>
+</div>
+
+<!-- Invoices Table -->
+<div class="table-container">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Invoice #</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr>
+                <td>
+                    <a href="{% url 'invoice_detail' invoice.pk %}" class="text-decoration-none">
+                        <strong>{{ invoice.invoice_number }}</strong>
+                    </a>
+                </td>
+                <td>{{ invoice.get_customer_display }}</td>
+                <td>{{ invoice.created_at|date:"M d, Y H:i" }}</td>
+                <td>₹{{ invoice.total_amount }}</td>
+                <td>₹{{ invoice.amount_paid }}</td>
+                <td>
+                    {% if invoice.status == 'paid' %}
+                    <span class="badge bg-success">Paid</span>
+                    {% elif invoice.status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                    {% else %}
+                    <span class="badge bg-danger">Cancelled</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-sm btn-outline-primary btn-action">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                    No invoices found.
+                    <a href="{% url 'invoice_create' %}">Create your first invoice</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

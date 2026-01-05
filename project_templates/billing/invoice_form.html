@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Grinkrawear{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-plus-lg"></i> {{ title }}</h1>
+</div>
+
+<form method="post" id="invoice-form">
+    {% csrf_token %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Customer Info -->
+            <div class="form-container mb-4">
+                <h5><i class="bi bi-person"></i> Customer Information</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Select Customer</label>
+                            {{ form.customer }}
+                            <small class="form-text text-muted">Or enter walk-in customer details below</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Customer Name</label>
+                            {{ form.customer_name }}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            {{ form.customer_phone }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Items -->
+            <div class="form-container mb-4">
+                <h5><i class="bi bi-cart"></i> Invoice Items</h5>
+                <table class="table" id="items-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th width="100">Qty</th>
+                            <th width="150">Price</th>
+                            <th width="150">Total</th>
+                            <th width="50"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-body">
+                        <tr class="invoice-item-row">
+                            <td>
+                                <select name="product_id" class="form-select product-select">
+                                    <option value="">Select Product</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.quantity }}">
+                                        {{ product.name }} ({{ product.quantity }} in stock)
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="number" name="quantity" class="form-control item-quantity" min="1" value="1"></td>
+                            <td><input type="number" name="unit_price" class="form-control item-price" step="0.01"></td>
+                            <td><input type="text" class="form-control item-total" readonly></td>
+                            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="bi bi-trash"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-outline-primary" id="add-item">
+                    <i class="bi bi-plus"></i> Add Item
+                </button>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Summary -->
+            <div class="form-container mb-4">
+                <h5><i class="bi bi-calculator"></i> Summary</h5>
+                <table class="table table-borderless">
+                    <tr>
+                        <td>Subtotal:</td>
+                        <td class="text-end">₹<span id="subtotal">0.00</span></td>
+                    </tr>
+                    <tr>
+                        <td>Discount:</td>
+                        <td>{{ form.discount }}</td>
+                    </tr>
+                    <tr class="border-top">
+                        <td><strong>Total:</strong></td>
+                        <td class="text-end"><strong>₹<span id="grand-total">0.00</span></strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Payment -->
+            <div class="form-container mb-4">
+                <h5><i class="bi bi-credit-card"></i> Payment</h5>
+                <div class="mb-3">
+                    <label class="form-label">Payment Method</label>
+                    {{ form.payment_method }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                    <i class="bi bi-check-lg"></i> Create Invoice
+                </button>
+                <a href="{% url 'invoice_list' %}" class="btn btn-secondary btn-lg">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemsBody = document.getElementById('items-body');
+    const addItemBtn = document.getElementById('add-item');
+
+    // Add new row
+    addItemBtn.addEventListener('click', function() {
+        const row = itemsBody.querySelector('.invoice-item-row').cloneNode(true);
+        row.querySelectorAll('input').forEach(input => input.value = '');
+        row.querySelector('.item-quantity').value = '1';
+        itemsBody.appendChild(row);
+        attachRowEvents(row);
+    });
+
+    // Remove row
+    itemsBody.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-row')) {
+            const rows = itemsBody.querySelectorAll('.invoice-item-row');
+            if (rows.length > 1) {
+                e.target.closest('.invoice-item-row').remove();
+                updateTotals();
+            }
+        }
+    });
+
+    // Attach events to initial row
+    document.querySelectorAll('.invoice-item-row').forEach(row => attachRowEvents(row));
+
+    function attachRowEvents(row) {
+        const productSelect = row.querySelector('.product-select');
+        const quantityInput = row.querySelector('.item-quantity');
+        const priceInput = row.querySelector('.item-price');
+
+        productSelect.addEventListener('change', function() {
+            const option = this.options[this.selectedIndex];
+            if (option.dataset.price) {
+                priceInput.value = option.dataset.price;
+                updateTotals();
+            }
+        });
+
+        quantityInput.addEventListener('input', updateTotals);
+        priceInput.addEventListener('input', updateTotals);
+    }
+
+    function updateTotals() {
+        let subtotal = 0;
+        document.querySelectorAll('.invoice-item-row').forEach(row => {
+            const qty = parseFloat(row.querySelector('.item-quantity').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            const total = qty * price;
+            row.querySelector('.item-total').value = total.toFixed(2);
+            subtotal += total;
+        });
+
+        const discount = parseFloat(document.querySelector('[name="discount"]').value) || 0;
+        document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('grand-total').textContent = (subtotal - discount).toFixed(2);
+    }
+
+    document.querySelector('[name="discount"]').addEventListener('input', updateTotals);
+});
+</script>
+{% endblock %}

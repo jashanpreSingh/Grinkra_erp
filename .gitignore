@@ -1,0 +1,51 @@
+# Ignore everything by default
+*
+
+# Include Django project files
+!.gitignore
+!manage.py
+!requirements.txt
+
+# Include Django apps
+!accounts/
+!accounts/**
+!billing/
+!billing/**
+!dashboard/
+!dashboard/**
+!inventory/
+!inventory/**
+
+# Include project settings
+!store_project/
+!store_project/**
+
+# Include static and templates
+!static/
+!static/**
+!media/
+!project_templates/
+!project_templates/**
+
+# Exclude Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Exclude database
+*.sqlite3
+db.sqlite3
+
+# Exclude environment files
+.env
+*.env
+
+# Exclude IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Exclude migrations pycache
+**/migrations/__pycache__/

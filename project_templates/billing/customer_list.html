@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Customers - Grinkrawear{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-people"></i> Customers</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Billing
+        </a>
+        <a href="{% url 'customer_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Add Customer
+        </a>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="table-container mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-10">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="Search customers..."
+                       value="{{ search_query }}">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">Search</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-container">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Total Purchases</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td><strong>{{ customer.name }}</strong></td>
+                <td>{{ customer.phone|default:"-" }}</td>
+                <td>{{ customer.email|default:"-" }}</td>
+                <td>₹{{ customer.total_purchases }}</td>
+                <td>
+                    <a href="{% url 'customer_edit' customer.pk %}" class="btn btn-sm btn-outline-primary btn-action">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="post" action="{% url 'customer_delete' customer.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger btn-action"
+                                data-confirm="Are you sure you want to delete {{ customer.name }}?">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    No customers found.
+                    <a href="{% url 'customer_create' %}">Add your first customer</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
