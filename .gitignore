@@ -49,3 +49,7 @@ db.sqlite3
 
 # Exclude migrations pycache
 **/migrations/__pycache__/
+
+# Include Render deployment files
+!build.sh
+!render.yaml

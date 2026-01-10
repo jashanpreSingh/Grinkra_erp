@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: store-project
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn store_project.wsgi:application"
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://store-project.onrender.com"
+      - key: DB_NAME
+        value: "mydb"
+      - key: DB_USER
+        value: "grinkra"
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_HOST
+        value: "194.238.23.56"
+      - key: DB_PORT
+        value: "5432"
+      - key: PYTHON_VERSION
+        value: "3.12.0"
