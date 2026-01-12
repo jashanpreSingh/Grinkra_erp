@@ -53,3 +53,7 @@ db.sqlite3
 # Include Render deployment files
 !build.sh
 !render.yaml
+
+# Include Vercel deployment files
+!vercel.json
+!build_files.sh
