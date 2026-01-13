@@ -5,10 +5,18 @@ from .models import Category, Product
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['name', 'description']
+        fields = ['name', 'code', 'description']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'maxlength': '3',
+                'placeholder': 'e.g., TS for T-Shirt'
+            }),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        help_texts = {
+            'code': 'Auto-generated if left blank. Used in SKU generation.'
         }
 
 
@@ -16,14 +24,17 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = [
-            'name', 'sku', 'category', 'description',
-            'price', 'cost_price', 'quantity', 'low_stock_threshold',
-            'image', 'is_active'
+            'name', 'category', 'season', 'gender', 'color', 'size',
+            'description', 'price', 'cost_price', 'quantity',
+            'low_stock_threshold', 'image', 'is_active'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'sku': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
+            'season': forms.Select(attrs={'class': 'form-select'}),
+            'gender': forms.Select(attrs={'class': 'form-select'}),
+            'color': forms.Select(attrs={'class': 'form-select'}),
+            'size': forms.Select(attrs={'class': 'form-select'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'cost_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),

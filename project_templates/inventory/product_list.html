@@ -18,14 +18,14 @@
 <!-- Filters -->
 <div class="table-container mb-4">
     <form method="get" class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input type="text" name="search" class="form-control" placeholder="Search products..."
+                <input type="text" name="search" class="form-control" placeholder="Search products or SKU..."
                        value="{{ search_query }}">
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select name="category" class="form-select">
                 <option value="">All Categories</option>
                 {% for cat in categories %}
@@ -35,15 +35,33 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+            <select name="season" class="form-select">
+                <option value="">All Seasons</option>
+                <option value="SU" {% if request.GET.season == 'SU' %}selected{% endif %}>Summer</option>
+                <option value="WI" {% if request.GET.season == 'WI' %}selected{% endif %}>Winter</option>
+                <option value="SP" {% if request.GET.season == 'SP' %}selected{% endif %}>Spring</option>
+                <option value="FA" {% if request.GET.season == 'FA' %}selected{% endif %}>Fall</option>
+                <option value="AY" {% if request.GET.season == 'AY' %}selected{% endif %}>All Year</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="gender" class="form-select">
+                <option value="">All Genders</option>
+                <option value="M" {% if request.GET.gender == 'M' %}selected{% endif %}>Men</option>
+                <option value="W" {% if request.GET.gender == 'W' %}selected{% endif %}>Women</option>
+                <option value="U" {% if request.GET.gender == 'U' %}selected{% endif %}>Unisex</option>
+            </select>
+        </div>
+        <div class="col-md-2">
             <select name="stock_status" class="form-select">
-                <option value="">All Stock Status</option>
+                <option value="">All Stock</option>
                 <option value="in_stock" {% if selected_stock_status == 'in_stock' %}selected{% endif %}>In Stock</option>
                 <option value="low_stock" {% if selected_stock_status == 'low_stock' %}selected{% endif %}>Low Stock</option>
                 <option value="out_of_stock" {% if selected_stock_status == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
             </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-1">
             <button type="submit" class="btn btn-secondary w-100">Filter</button>
         </div>
     </form>
@@ -57,6 +75,9 @@
                 <th>Product</th>
                 <th>SKU</th>
                 <th>Category</th>
+                <th>Season</th>
+                <th>Gender</th>
+                <th>Color/Size</th>
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Status</th>
@@ -74,8 +95,17 @@
                     <span class="badge bg-secondary">Inactive</span>
                     {% endif %}
                 </td>
-                <td><code>{{ product.sku }}</code></td>
+                <td><code class="text-primary">{{ product.sku }}</code></td>
                 <td>{{ product.category.name|default:"-" }}</td>
+                <td>
+                    <span class="badge bg-{% if product.season == 'SU' %}warning{% elif product.season == 'WI' %}info{% elif product.season == 'SP' %}success{% elif product.season == 'FA' %}danger{% else %}secondary{% endif %}">
+                        {{ product.get_season_display }}
+                    </span>
+                </td>
+                <td>{{ product.get_gender_display }}</td>
+                <td>
+                    <small>{{ product.get_color_display }} / {{ product.get_size_display }}</small>
+                </td>
                 <td>₹{{ product.price }}</td>
                 <td>{{ product.quantity }}</td>
                 <td>
@@ -105,7 +135,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="text-center text-muted py-4">
+                <td colspan="10" class="text-center text-muted py-4">
                     No products found.
                     <a href="{% url 'product_create' %}">Add your first product</a>
                 </td>
