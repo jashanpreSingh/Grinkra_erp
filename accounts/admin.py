@@ -22,7 +22,7 @@ class CustomUserAdmin(UserAdmin):
                 'can_manage_categories',
                 'can_adjust_stock',
             ),
-            'classes': ('collapse',),
+            
         }),
         ('Billing Permissions', {
             'fields': (
@@ -31,11 +31,11 @@ class CustomUserAdmin(UserAdmin):
                 'can_cancel_invoice',
                 'can_manage_customers',
             ),
-            'classes': ('collapse',),
+            
         }),
         ('User Management', {
             'fields': ('can_manage_users',),
-            'classes': ('collapse',),
+            
         }),
     )
     
