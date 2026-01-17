@@ -48,7 +48,10 @@
                 </td>
                 <td>{{ user.created_at|date:"M d, Y" }}</td>
                 <td>
-                    <a href="{% url 'user_edit' user.pk %}" class="btn btn-sm btn-outline-primary btn-action">
+                    <a href="{% url 'user_permissions' user.pk %}" class="btn btn-sm btn-outline-success btn-action" title="Manage Permissions">
+                        <i class="bi bi-shield-lock"></i>
+                    </a>
+                    <a href="{% url 'user_edit' user.pk %}" class="btn btn-sm btn-outline-primary btn-action" title="Edit User">
                         <i class="bi bi-pencil"></i>
                     </a>
                     {% if user != request.user %}

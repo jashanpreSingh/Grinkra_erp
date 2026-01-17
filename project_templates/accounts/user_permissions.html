@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load permission_tags %}
+
+{% block title %}Manage Permissions - {{ edit_user.username }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-shield-lock"></i> Manage Permissions</h1>
+    <a href="{% url 'user_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Users
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="form-container text-center">
+            <div class="mb-3">
+                <i class="bi bi-person-circle" style="font-size: 4rem; color: var(--primary-color);"></i>
+            </div>
+            <h4>{{ edit_user.username }}</h4>
+            <p class="text-muted">{{ edit_user.email }}</p>
+            <span class="badge {% if edit_user.role == 'admin' %}bg-danger{% else %}bg-primary{% endif %} fs-6">
+                {{ edit_user.get_role_display }}
+            </span>
+            {% if edit_user.is_superuser %}
+            <span class="badge bg-warning text-dark fs-6 ms-1">Superuser</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Inventory Permissions -->
+            <div class="form-container mb-4">
+                <h5 class="mb-3"><i class="bi bi-box-seam text-success"></i> Inventory Permissions</h5>
+                <div class="row">
+                    {% for field, label, description in inventory_permissions %}
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" 
+                                   id="{{ field }}" name="{{ field }}"
+                                   {% if edit_user|getattr:field %}checked{% endif %}
+                                   style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label ms-2" for="{{ field }}">
+                                <strong>{{ label }}</strong>
+                                <br><small class="text-muted">{{ description }}</small>
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Billing Permissions -->
+            <div class="form-container mb-4">
+                <h5 class="mb-3"><i class="bi bi-receipt text-primary"></i> Billing Permissions</h5>
+                <div class="row">
+                    {% for field, label, description in billing_permissions %}
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" 
+                                   id="{{ field }}" name="{{ field }}"
+                                   {% if edit_user|getattr:field %}checked{% endif %}
+                                   style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label ms-2" for="{{ field }}">
+                                <strong>{{ label }}</strong>
+                                <br><small class="text-muted">{{ description }}</small>
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- User Management Permissions -->
+            <div class="form-container mb-4">
+                <h5 class="mb-3"><i class="bi bi-people text-danger"></i> User Management</h5>
+                <div class="row">
+                    {% for field, label, description in user_permissions_list %}
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" 
+                                   id="{{ field }}" name="{{ field }}"
+                                   {% if edit_user|getattr:field %}checked{% endif %}
+                                   style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label ms-2" for="{{ field }}">
+                                <strong>{{ label }}</strong>
+                                <br><small class="text-muted">{{ description }}</small>
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="form-container mb-4">
+                <h5 class="mb-3"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-outline-success" onclick="selectAll()">
+                        <i class="bi bi-check-all"></i> Grant All
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="deselectAll()">
+                        <i class="bi bi-x-lg"></i> Revoke All
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" onclick="setStaffDefaults()">
+                        <i class="bi bi-person"></i> Staff Defaults
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="setAdminDefaults()">
+                        <i class="bi bi-person-gear"></i> Admin Defaults
+                    </button>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-lg"></i> Save Permissions
+                </button>
+                <a href="{% url 'user_list' %}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function selectAll() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+}
+
+function deselectAll() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+}
+
+function setStaffDefaults() {
+    deselectAll();
+    // Staff defaults: view inventory, view billing, create invoice, manage customers
+    document.getElementById('can_view_inventory').checked = true;
+    document.getElementById('can_view_billing').checked = true;
+    document.getElementById('can_create_invoice').checked = true;
+    document.getElementById('can_manage_customers').checked = true;
+}
+
+function setAdminDefaults() {
+    selectAll();
+}
+</script>
+{% endblock %}

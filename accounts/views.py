@@ -87,3 +87,54 @@ def user_delete(request, pk):
         user.delete()
         messages.success(request, 'User deleted successfully.')
     return redirect('user_list')
+
+
+@admin_required
+def user_permissions(request, pk):
+    user = get_object_or_404(CustomUser, pk=pk)
+
+    # Define all permission fields
+    inventory_permissions = [
+        ('can_view_inventory', 'View Inventory', 'View products and categories'),
+        ('can_add_product', 'Add Product', 'Create new products'),
+        ('can_edit_product', 'Edit Product', 'Edit existing products'),
+        ('can_delete_product', 'Delete Product', 'Delete products'),
+        ('can_manage_categories', 'Manage Categories', 'Add, edit, delete categories'),
+        ('can_adjust_stock', 'Adjust Stock', 'Adjust product stock levels'),
+    ]
+
+    billing_permissions = [
+        ('can_view_billing', 'View Billing', 'View invoices and customers'),
+        ('can_create_invoice', 'Create Invoice', 'Create new invoices'),
+        ('can_cancel_invoice', 'Cancel Invoice', 'Cancel existing invoices'),
+        ('can_manage_customers', 'Manage Customers', 'Add, edit, delete customers'),
+    ]
+
+    user_permissions_list = [
+        ('can_manage_users', 'Manage Users', 'Access user management'),
+    ]
+
+    if request.method == 'POST':
+        # Update inventory permissions
+        for field, _, _ in inventory_permissions:
+            setattr(user, field, field in request.POST)
+
+        # Update billing permissions
+        for field, _, _ in billing_permissions:
+            setattr(user, field, field in request.POST)
+
+        # Update user management permissions
+        for field, _, _ in user_permissions_list:
+            setattr(user, field, field in request.POST)
+
+        user.save()
+        messages.success(request, f'Permissions updated for {user.username}.')
+        return redirect('user_permissions', pk=pk)
+
+    context = {
+        'edit_user': user,
+        'inventory_permissions': inventory_permissions,
+        'billing_permissions': billing_permissions,
+        'user_permissions_list': user_permissions_list,
+    }
+    return render(request, 'accounts/user_permissions.html', context)
