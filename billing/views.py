@@ -6,9 +6,28 @@ from django.http import JsonResponse
 from django.db.models import Q, Sum
 from django.db import transaction
 from decimal import Decimal
+from functools import wraps
 from .models import Customer, Invoice, InvoiceItem
 from .forms import CustomerForm, InvoiceForm, InvoiceItemForm, InvoicePaymentForm
 from inventory.models import Product
+
+
+def permission_required(permission_attr, redirect_url='dashboard'):
+    """Decorator to check user permissions"""
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            user = request.user
+            # Admins have all permissions
+            if user.is_admin():
+                return view_func(request, *args, **kwargs)
+            # Check specific permission
+            if getattr(user, permission_attr, False):
+                return view_func(request, *args, **kwargs)
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect(redirect_url)
+        return login_required(wrapper)
+    return decorator
 
 
 @login_required
@@ -37,7 +56,7 @@ def invoice_list(request):
     return render(request, 'billing/invoice_list.html', context)
 
 
-@login_required
+@permission_required('can_create_invoice')
 def invoice_create(request):
     products = Product.objects.filter(is_active=True, quantity__gt=0)
     customers = Customer.objects.all()
@@ -116,7 +135,7 @@ def invoice_detail(request, pk):
     })
 
 
-@login_required
+@permission_required('can_cancel_invoice')
 @require_POST
 def invoice_cancel(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
@@ -153,7 +172,7 @@ def customer_list(request):
     })
 
 
-@login_required
+@permission_required('can_manage_customers')
 def customer_create(request):
     if request.method == 'POST':
         form = CustomerForm(request.POST)
@@ -167,7 +186,7 @@ def customer_create(request):
     return render(request, 'billing/customer_form.html', {'form': form, 'title': 'Add Customer'})
 
 
-@login_required
+@permission_required('can_manage_customers')
 def customer_edit(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
 
@@ -183,7 +202,7 @@ def customer_edit(request, pk):
     return render(request, 'billing/customer_form.html', {'form': form, 'title': 'Edit Customer'})
 
 
-@login_required
+@permission_required('can_manage_customers')
 @require_POST
 def customer_delete(request, pk):
     customer = get_object_or_404(Customer, pk=pk)

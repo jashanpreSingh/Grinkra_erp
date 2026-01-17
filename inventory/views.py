@@ -3,12 +3,35 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Sum, F
+from functools import wraps
 from .models import Category, Product
 from .forms import CategoryForm, ProductForm, StockAdjustmentForm
 
 
+def permission_required(permission_attr, redirect_url='dashboard'):
+    """Decorator to check user permissions"""
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            user = request.user
+            # Admins have all permissions
+            if user.is_admin():
+                return view_func(request, *args, **kwargs)
+            # Check specific permission
+            if getattr(user, permission_attr, False):
+                return view_func(request, *args, **kwargs)
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect(redirect_url)
+        return login_required(wrapper)
+    return decorator
+
+
 @login_required
 def product_list(request):
+    if not request.user.can_view_inventory and not request.user.is_admin():
+        messages.error(request, 'You do not have permission to view inventory.')
+        return redirect('dashboard')
+    
     products = Product.objects.select_related('category').all()
 
     # Search functionality
@@ -46,7 +69,7 @@ def product_list(request):
     return render(request, 'inventory/product_list.html', context)
 
 
-@login_required
+@permission_required('can_add_product')
 def product_create(request):
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
@@ -60,7 +83,7 @@ def product_create(request):
     return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Add Product'})
 
 
-@login_required
+@permission_required('can_edit_product')
 def product_edit(request, pk):
     product = get_object_or_404(Product, pk=pk)
 
@@ -76,7 +99,7 @@ def product_edit(request, pk):
     return render(request, 'inventory/product_form.html', {'form': form, 'title': 'Edit Product', 'product': product})
 
 
-@login_required
+@permission_required('can_delete_product')
 @require_POST
 def product_delete(request, pk):
     product = get_object_or_404(Product, pk=pk)
@@ -85,7 +108,7 @@ def product_delete(request, pk):
     return redirect('product_list')
 
 
-@login_required
+@permission_required('can_adjust_stock')
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
     stock_form = StockAdjustmentForm()
@@ -115,11 +138,15 @@ def product_detail(request, pk):
 
 @login_required
 def category_list(request):
+    if not request.user.can_view_inventory and not request.user.is_admin():
+        messages.error(request, 'You do not have permission to view inventory.')
+        return redirect('dashboard')
+    
     categories = Category.objects.all()
     return render(request, 'inventory/category_list.html', {'categories': categories})
 
 
-@login_required
+@permission_required('can_manage_categories')
 def category_create(request):
     if request.method == 'POST':
         form = CategoryForm(request.POST)
@@ -133,7 +160,7 @@ def category_create(request):
     return render(request, 'inventory/category_form.html', {'form': form, 'title': 'Add Category'})
 
 
-@login_required
+@permission_required('can_manage_categories')
 def category_edit(request, pk):
     category = get_object_or_404(Category, pk=pk)
 
@@ -149,7 +176,7 @@ def category_edit(request, pk):
     return render(request, 'inventory/category_form.html', {'form': form, 'title': 'Edit Category'})
 
 
-@login_required
+@permission_required('can_manage_categories')
 @require_POST
 def category_delete(request, pk):
     category = get_object_or_404(Category, pk=pk)
