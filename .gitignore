@@ -23,6 +23,8 @@
 # Include static and templates
 !static/
 !static/**
+!staticfiles/
+!staticfiles/**
 !media/
 !project_templates/
 !project_templates/**
